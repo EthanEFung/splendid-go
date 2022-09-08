@@ -11,6 +11,7 @@ func main() {
 	e := echo.New()
 	lobbyBroker := NewLobbyBroker()
 	lobby := NewLobby(lobbyBroker)
+	lobbyBroker.setLobby(lobby)
 
 	e.Use(middleware.CORS())
 
@@ -19,6 +20,13 @@ func main() {
 	})
 
 	e.GET("/lobby", echo.WrapHandler(lobbyBroker))
+
+	e.GET("/join", func(c echo.Context) error {
+		/*
+			... TODO
+		*/
+		return nil
+	})
 
 	e.POST("/create", func(c echo.Context) error {
 		type parameters struct {

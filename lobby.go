@@ -4,14 +4,14 @@ import "encoding/json"
 
 type Lobby struct {
 	broker *LobbyBroker
-	Rooms map[string]*Room
+	Rooms  map[string]*Room
 }
 
 func NewLobby(broker *LobbyBroker) *Lobby {
 	rooms := make(map[string]*Room)
 	return &Lobby{
 		broker: broker,
-		Rooms: rooms,
+		Rooms:  rooms,
 	}
 }
 

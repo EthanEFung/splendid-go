@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 )
@@ -11,6 +12,10 @@ import (
 */
 type LobbyBroker struct {
 	/*
+		lobby is the entity the broker is responsible for managing messages to and from.
+	*/
+	lobby *Lobby
+	/*
 		subscribers is a map of the current user channels that will receive the messages.
 	*/
 	subscribers map[chan []byte]bool
@@ -19,7 +24,6 @@ type LobbyBroker struct {
 		to `subscribers`.
 	*/
 	subscribing chan chan []byte
-
 	/*
 		unsubscribing is the channel used to remove an existing user channel
 		from `subscribers`.
@@ -68,6 +72,18 @@ func (b *LobbyBroker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Transfer-Encoding", "chunked")
 
+	/*
+		the first thing that should be done is have the current state of
+		the rooms flushed to the client. This is to ensure that when
+		the connection is successful, the sole connecting client can be
+		fed the current state of the rooms.
+	*/
+	if err := b.connect(w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	flusher.Flush()
+
 	for {
 		msg, open := <-messageChan
 		if !open {
@@ -82,7 +98,7 @@ func (b *LobbyBroker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *LobbyBroker) post(w http.ResponseWriter, msg []byte) {
-	msg = append([]byte("event: message\ndata:"), msg...) 
+	msg = append([]byte("event: message\ndata:"), msg...)
 	msg = append(msg, '\n', '\n')
 	w.Write(msg)
 }
@@ -102,4 +118,19 @@ func (b *LobbyBroker) listen() {
 			}
 		}
 	}
+}
+
+func (b *LobbyBroker) setLobby(l *Lobby) {
+	b.lobby = l
+}
+
+func (b *LobbyBroker) connect(w http.ResponseWriter) error {
+	// just write to the current response writer
+	bytes, err := json.Marshal(b.lobby.Rooms)
+
+	if err != nil {
+		return err
+	}
+	b.post(w, bytes)
+	return nil
 }
