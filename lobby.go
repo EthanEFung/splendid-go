@@ -3,15 +3,15 @@ package main
 import "encoding/json"
 
 type Lobby struct {
-	broker *LobbyBroker
 	Rooms  map[string]*Room
+	broker *LobbyBroker
 }
 
 func NewLobby(broker *LobbyBroker) *Lobby {
 	rooms := make(map[string]*Room)
 	return &Lobby{
-		broker: broker,
 		Rooms:  rooms,
+		broker: broker,
 	}
 }
 

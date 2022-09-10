@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+type msgChan chan []byte
+
 /*
 	LobbyBroker is responsible for sending push notifications to subscribers regarding
 	the current rooms that are open and players that join the current rooms.
@@ -18,30 +20,30 @@ type LobbyBroker struct {
 	/*
 		subscribers is a map of the current user channels that will receive the messages.
 	*/
-	subscribers map[chan []byte]bool
+	subscribers map[msgChan]bool
 	/*
 		subscribing is the channel that will be used to add a new user channel
 		to `subscribers`.
 	*/
-	subscribing chan chan []byte
+	subscribing chan msgChan
 	/*
 		unsubscribing is the channel used to remove an existing user channel
 		from `subscribers`.
 	*/
-	unsubscribing chan chan []byte
+	unsubscribing chan msgChan
 	/*
 		messages is the channel that receives all the messages that should be broadcasted
 		to subscribers.
 	*/
-	messages chan []byte
+	messages msgChan
 }
 
 func NewLobbyBroker() *LobbyBroker {
 	broker := &LobbyBroker{
-		subscribers:   make(map[chan []byte]bool),
-		subscribing:   make(chan chan []byte),
-		unsubscribing: make(chan chan []byte),
-		messages:      make(chan []byte),
+		subscribers:   make(map[msgChan]bool),
+		subscribing:   make(chan msgChan),
+		unsubscribing: make(chan msgChan),
+		messages:      make(msgChan),
 	}
 
 	go broker.listen()
@@ -56,7 +58,7 @@ func (b *LobbyBroker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messageChan := make(chan []byte)
+	messageChan := make(msgChan)
 
 	b.subscribing <- messageChan
 
