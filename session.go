@@ -41,7 +41,7 @@ func AuthenticateToken(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.NoContent(http.StatusUnauthorized)
 		}
 		id := sess.Values[sessionToken]
-	  c.Set(sessionToken, id)
+		c.Set(sessionToken, id)
 		return next(c)
 	}
 }

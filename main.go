@@ -13,8 +13,9 @@ import (
 
 var secret string
 var store *sessions.CookieStore
+
 func init() {
-	flag.StringVar(&secret, "s", "",  "secret used to set up cookie store")
+	flag.StringVar(&secret, "s", "", "secret used to set up cookie store")
 	store = sessions.NewCookieStore([]byte(secret))
 }
 
@@ -28,7 +29,6 @@ func main() {
 	lobby := NewLobby(lobbyBroker)
 	lobbyBroker.setLobby(lobby)
 
-
 	/**************
 	* middlewares *
 	**************/
@@ -37,7 +37,7 @@ func main() {
 		/*
 			! This should change in production. Do not deploy unless this is properly set.
 		*/
-		AllowOrigins: []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowCredentials: true,
 	}))
 	e.Use(session.Middleware(store))
@@ -56,7 +56,7 @@ func main() {
 			... TODO
 		*/
 		return nil
-}, AuthenticateToken)
+	}, AuthenticateToken)
 	e.POST("/create", func(c echo.Context) error {
 		type parameters struct {
 			Roomname string `json:"roomname" form:"roomname" query:"roomname"`

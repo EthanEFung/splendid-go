@@ -27,6 +27,7 @@ func NewRoom(name string, broker *RoomBroker) *Room {
 func (r *Room) Join(user *User) {
 	r.Occupants[user.Name] = user
 }
+
 /*
 	Leave will remove the user from the occupants map
 */
