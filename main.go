@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -50,16 +50,16 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 	e.GET("/lobby", echo.WrapHandler(lobbyBroker), CreateSessionToken)
-	e.GET("/join", func(c echo.Context) error {
-		log.Println("here i am", c.Get(sessionToken))
+	e.GET("/room/:id", func(c echo.Context) error {
 		/*
-			... TODO
+			...
 		*/
 		return nil
 	}, AuthenticateToken)
 	e.POST("/create", func(c echo.Context) error {
 		type parameters struct {
 			Roomname string `json:"roomname" form:"roomname" query:"roomname"`
+			Players  string `json:"players"`
 		}
 		p := new(parameters)
 		if err := c.Bind(p); err != nil {
@@ -68,8 +68,15 @@ func main() {
 		if p.Roomname == "" {
 			return c.String(http.StatusBadRequest, "roomname is required")
 		}
-		broker := NewRoomBroker()
-		room := NewRoom(p.Roomname, broker)
+		players, err := strconv.Atoi(p.Players)
+		if err != nil {
+			return c.String(http.StatusBadRequest, "players must be a number")
+		}
+		if players < 2 || players > 4 {
+			return c.String(http.StatusBadRequest, "players must be 2 - 4 only")
+		}
+		room := NewRoom(p.Roomname, lobby.broker)
+		room.setPlayers(players)
 		lobby.Add(room)
 		return c.NoContent(http.StatusCreated)
 	}, AuthenticateToken)

@@ -7,10 +7,10 @@ type Room struct {
 	Name      string           `json:"name"`
 	Game      *Game            `json:"game"`
 	Occupants map[string]*User `json:"occupants"`
-	broker    *RoomBroker
+	broker    *LobbyBroker
 }
 
-func NewRoom(name string, broker *RoomBroker) *Room {
+func NewRoom(name string, broker *LobbyBroker) *Room {
 	occupants := make(map[string]*User)
 	return &Room{
 		ID:        uuid.New(),
@@ -33,4 +33,8 @@ func (r *Room) Join(user *User) {
 */
 func (r *Room) Leave(user *User) {
 	delete(r.Occupants, user.Name)
+}
+
+func (r *Room) setPlayers(n int) {
+	r.Game.Max = n
 }

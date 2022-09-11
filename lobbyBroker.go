@@ -36,6 +36,11 @@ type LobbyBroker struct {
 		to subscribers.
 	*/
 	messages msgChan
+	/*
+		rooms is a map with the uuid as the key and msgChannels the broker should
+		broadcast to
+	*/
+	rooms map[string]Room
 }
 
 func NewLobbyBroker() *LobbyBroker {
@@ -51,6 +56,15 @@ func NewLobbyBroker() *LobbyBroker {
 	return broker
 }
 
+/*
+	ServeHttp implements the http.Handler interface and does the following:
+	ServeHTTP will set up a server-sent event stream for the client, writes
+	a connection message and flushes the msg to the client. At which it will
+	begin watching for events from the main message channel. Upon receiving
+	it will flush the message to the client. Any time the process receives
+	a `Done` signal from the request context a go routine will be waiting
+	and will send a message to the broker that the client has unsubscribed.
+*/
 func (b *LobbyBroker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -115,6 +129,10 @@ func (b *LobbyBroker) listen() {
 			delete(b.subscribers, s)
 			log.Printf("Client removed. %d clients registered\n", len(b.subscribers))
 		case msg := <-b.messages:
+			/*
+				TODO: the messages implementation should change where the message gives us
+				context of where the message should be distributed
+			*/
 			for channel := range b.subscribers {
 				channel <- msg
 			}
