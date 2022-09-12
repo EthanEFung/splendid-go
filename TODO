@@ -1,0 +1,4 @@
+- [ ] create a connection between the lobby broker and the room when a new occupant
+      has entered. This will help with the user experience so that users will know
+      and recognize when other users have entered, and be able to determine whether
+      they should join.

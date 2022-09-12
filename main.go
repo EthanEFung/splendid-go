@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ethanefung/splendid-go/middlewares"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -24,10 +25,18 @@ func main() {
 	if secret == "" {
 		panic("cannot run without a session secret")
 	}
+
+	/***********
+	* entities *
+	***********/
+
 	e := echo.New()
 	lobbyBroker := NewLobbyBroker()
 	lobby := NewLobby(lobbyBroker)
 	lobbyBroker.setLobby(lobby)
+
+	roomValidator := NewRoomValidator(lobby)
+	roomBroker := NewRoomBroker(lobby, roomValidator)
 
 	/**************
 	* middlewares *
@@ -46,16 +55,9 @@ func main() {
 	* routes *
 	*********/
 
-	e.GET("/", func(c echo.Context) error {
-		return c.NoContent(http.StatusOK)
-	})
-	e.GET("/lobby", echo.WrapHandler(lobbyBroker), CreateSessionToken)
-	e.GET("/room/:id", func(c echo.Context) error {
-		/*
-			...
-		*/
-		return nil
-	}, AuthenticateToken)
+	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusOK) })
+	e.GET("/lobby", echo.WrapHandler(lobbyBroker), middlewares.CreateSessionToken)
+	e.GET("/room/:id", roomBroker.HanderFunc, middlewares.AuthenticateToken)
 	e.POST("/create", func(c echo.Context) error {
 		type parameters struct {
 			Roomname string `json:"roomname" form:"roomname" query:"roomname"`
@@ -79,7 +81,11 @@ func main() {
 		room.setPlayers(players)
 		lobby.Add(room)
 		return c.NoContent(http.StatusCreated)
-	}, AuthenticateToken)
+	}, middlewares.AuthenticateToken)
+
+	/*************
+	* operations *
+	*************/
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

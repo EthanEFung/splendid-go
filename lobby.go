@@ -1,14 +1,18 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 type Lobby struct {
-	Rooms  map[string]*Room
+	Rooms  map[uuid.UUID]*Room
 	broker *LobbyBroker
 }
 
 func NewLobby(broker *LobbyBroker) *Lobby {
-	rooms := make(map[string]*Room)
+	rooms := make(map[uuid.UUID]*Room)
 	return &Lobby{
 		Rooms:  rooms,
 		broker: broker,
@@ -16,12 +20,12 @@ func NewLobby(broker *LobbyBroker) *Lobby {
 }
 
 func (l *Lobby) Add(r *Room) error {
-	l.Rooms[r.Name] = r
+	l.Rooms[r.ID] = r
 	return l.post()
 }
 
 func (l *Lobby) Remove(r *Room) error {
-	delete(l.Rooms, r.Name)
+	delete(l.Rooms, r.ID)
 	return l.post()
 }
 
