@@ -7,17 +7,17 @@ type Room struct {
 	Name      string           `json:"name"`
 	Game      *Game            `json:"game"`
 	Occupants map[string]*User `json:"occupants"`
-	broker    *LobbyBroker
+	broker    *RoomBroker
 }
 
-func NewRoom(name string, broker *LobbyBroker) *Room {
+func NewRoom(name string, rb *RoomBroker) *Room {
 	occupants := make(map[string]*User)
 	return &Room{
 		ID:        uuid.New(),
 		Name:      name,
 		Game:      NewGame(),
 		Occupants: occupants,
-		broker:    broker,
+		broker:    rb,
 	}
 }
 

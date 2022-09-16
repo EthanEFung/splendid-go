@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -32,11 +33,13 @@ func main() {
 
 	e := echo.New()
 	lobbyBroker := NewLobbyBroker()
-	lobby := NewLobby(lobbyBroker)
+	roomValidator := NewRoomValidator()
+	roomBroker := NewRoomBroker(roomValidator)
+	lobby := NewLobby(lobbyBroker, roomBroker)
 	lobbyBroker.setLobby(lobby)
-
-	roomValidator := NewRoomValidator(lobby)
-	roomBroker := NewRoomBroker(lobby, roomValidator)
+	roomBroker.setLobby(lobby)
+	roomValidator.setLobby(lobby)
+	
 
 	/**************
 	* middlewares *
@@ -65,6 +68,7 @@ func main() {
 		}
 		p := new(parameters)
 		if err := c.Bind(p); err != nil {
+			log.Printf("\n-----ERR:\n%v", err)
 			return err
 		}
 		if p.Roomname == "" {
@@ -77,9 +81,10 @@ func main() {
 		if players < 2 || players > 4 {
 			return c.String(http.StatusBadRequest, "players must be 2 - 4 only")
 		}
-		room := NewRoom(p.Roomname, lobby.broker)
+		room := NewRoom(p.Roomname, lobby.roomBroker)
 		room.setPlayers(players)
 		lobby.Add(room)
+		log.Printf("\n_________________________\n")
 		return c.NoContent(http.StatusCreated)
 	}, middlewares.AuthenticateToken)
 

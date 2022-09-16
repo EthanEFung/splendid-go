@@ -8,24 +8,28 @@ import (
 
 type Lobby struct {
 	Rooms  map[uuid.UUID]*Room
-	broker *LobbyBroker
+	lobbyBroker *LobbyBroker
+	roomBroker *RoomBroker
 }
 
-func NewLobby(broker *LobbyBroker) *Lobby {
+func NewLobby(lb *LobbyBroker, rb *RoomBroker) *Lobby {
 	rooms := make(map[uuid.UUID]*Room)
 	return &Lobby{
 		Rooms:  rooms,
-		broker: broker,
+		lobbyBroker: lb,
+		roomBroker: rb,
 	}
 }
 
 func (l *Lobby) Add(r *Room) error {
 	l.Rooms[r.ID] = r
+	l.roomBroker.Add(r)
 	return l.post()
 }
 
 func (l *Lobby) Remove(r *Room) error {
 	delete(l.Rooms, r.ID)
+	l.roomBroker.Remove(r)
 	return l.post()
 }
 
@@ -34,6 +38,6 @@ func (l *Lobby) post() error {
 	if err != nil {
 		return err
 	}
-	l.broker.messages <- msg
+	l.lobbyBroker.messages <- msg
 	return nil
 }

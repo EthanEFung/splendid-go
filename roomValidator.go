@@ -6,11 +6,15 @@ type RoomValidator struct {
 	Lobby *Lobby
 }
 
-func NewRoomValidator(l *Lobby) *RoomValidator {
-	return &RoomValidator{l}
+func NewRoomValidator() *RoomValidator {
+	return &RoomValidator{}
 }
 
 func (v *RoomValidator) Validate(id uuid.UUID) bool {
 	_, exists := v.Lobby.Rooms[id]
 	return exists
+}
+
+func (v *RoomValidator) setLobby(l *Lobby) {
+	v.Lobby = l
 }

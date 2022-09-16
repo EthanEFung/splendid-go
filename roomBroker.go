@@ -32,9 +32,8 @@ type RoomBroker struct {
 	validator *RoomValidator
 }
 
-func NewRoomBroker(l *Lobby, v *RoomValidator) *RoomBroker {
+func NewRoomBroker(v *RoomValidator) *RoomBroker {
 	broker := &RoomBroker{
-		lobby:         l,
 		subscribing:   make(chan RoomSubscriber),
 		subscribers:   make(map[string]map[msgChan]bool),
 		unsubscribing: make(chan RoomSubscriber),
@@ -99,12 +98,22 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 	return nil
 }
 
+func (b *RoomBroker) Add(r * Room) {
+	b.subscribers[r.ID.String()] = make(map[msgChan]bool)
+}
+
+func (b *RoomBroker) Remove(r *Room) {
+	delete(b.subscribers, r.ID.String())
+}
+
 func (b *RoomBroker) listen() {
 	for {
 		select {
 		case rs := <-b.subscribing:
+			log.Printf("new subscriber for room %v\n", rs.room)
 			b.subscribers[rs.room][rs.channel] = true
 		case rs := <-b.unsubscribing:
+			log.Printf("unsubcribing from room %v\n", rs.room)
 			delete(b.subscribers[rs.room], rs.channel)
 		case rm := <-b.messages:
 			for channel := range b.subscribers[rm.room] {
@@ -120,4 +129,8 @@ func (b *RoomBroker) post(c echo.Context, msg []byte) {
 	msg = append(msg, '\n', '\n')
 	c.Response().Write(msg)
 	c.Response().Flush()
+}
+
+func (b *RoomBroker) setLobby(l *Lobby) {
+	b.lobby = l
 }

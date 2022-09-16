@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -34,10 +35,11 @@ func AuthenticateToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get(sessionToken, c)
 		if err != nil {
-			fmt.Println("this is far as you go", err)
+			log.Println("this is far as you go", err)
 			return c.NoContent(http.StatusForbidden)
 		}
 		if sess.IsNew {
+			log.Println("new session attempting to connect")
 			return c.NoContent(http.StatusUnauthorized)
 		}
 		id := sess.Values[sessionToken]
