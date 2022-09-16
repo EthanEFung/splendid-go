@@ -98,7 +98,7 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 	return nil
 }
 
-func (b *RoomBroker) Add(r * Room) {
+func (b *RoomBroker) Add(r *Room) {
 	b.subscribers[r.ID.String()] = make(map[msgChan]bool)
 }
 

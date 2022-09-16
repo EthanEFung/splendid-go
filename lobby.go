@@ -7,17 +7,17 @@ import (
 )
 
 type Lobby struct {
-	Rooms  map[uuid.UUID]*Room
+	Rooms       map[uuid.UUID]*Room
 	lobbyBroker *LobbyBroker
-	roomBroker *RoomBroker
+	roomBroker  *RoomBroker
 }
 
 func NewLobby(lb *LobbyBroker, rb *RoomBroker) *Lobby {
 	rooms := make(map[uuid.UUID]*Room)
 	return &Lobby{
-		Rooms:  rooms,
+		Rooms:       rooms,
 		lobbyBroker: lb,
-		roomBroker: rb,
+		roomBroker:  rb,
 	}
 }
 

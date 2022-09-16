@@ -39,7 +39,6 @@ func main() {
 	lobbyBroker.setLobby(lobby)
 	roomBroker.setLobby(lobby)
 	roomValidator.setLobby(lobby)
-	
 
 	/**************
 	* middlewares *
