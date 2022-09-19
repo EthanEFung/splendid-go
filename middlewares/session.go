@@ -22,6 +22,7 @@ func CreateSessionToken(next echo.HandlerFunc) echo.HandlerFunc {
 			HttpOnly: true,
 		}
 		sess.Values[sessionToken] = uuid.NewString()
+		sess.Values["user-id"] = uuid.NewString()
 		err := sess.Save(c.Request(), c.Response())
 		if err != nil {
 			fmt.Println(err)
@@ -43,7 +44,9 @@ func AuthenticateToken(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.NoContent(http.StatusUnauthorized)
 		}
 		id := sess.Values[sessionToken]
+		userID := sess.Values["user-id"]
 		c.Set(sessionToken, id)
+		c.Set("user-id", userID)
 		return next(c)
 	}
 }

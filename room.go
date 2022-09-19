@@ -1,6 +1,9 @@
 package main
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+)
 
 type Room struct {
 	ID        uuid.UUID        `json:"id"`
@@ -24,15 +27,17 @@ func NewRoom(name string, rb *RoomBroker) *Room {
 /*
 	Join will add the user to the occupants map
 */
-func (r *Room) Join(user *User) {
-	r.Occupants[user.Name] = user
+func (r *Room) Join(c echo.Context) {
+	user := NewUser(c)
+	r.Occupants[user.ID] = user
 }
 
 /*
 	Leave will remove the user from the occupants map
 */
-func (r *Room) Leave(user *User) {
-	delete(r.Occupants, user.Name)
+func (r *Room) Leave(c echo.Context) {
+	userID := c.Get("user-id")
+	delete(r.Occupants, userID.(string))
 }
 
 func (r *Room) setPlayers(n int) {

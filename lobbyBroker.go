@@ -36,11 +36,6 @@ type LobbyBroker struct {
 		to subscribers.
 	*/
 	messages msgChan
-	/*
-		rooms is a map with the uuid as the key and msgChannels the broker should
-		broadcast to
-	*/
-	rooms map[string]Room
 }
 
 func NewLobbyBroker() *LobbyBroker {

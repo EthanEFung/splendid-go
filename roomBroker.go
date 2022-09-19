@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -61,7 +62,8 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 
 	// check to see whether or not the suggested room is a valid room id
 	id := c.Param("id")
-	if uuid, err := uuid.Parse(id); err != nil || !b.validator.Validate(uuid) {
+	uuid, err := uuid.Parse(id); 
+	if err != nil || !b.validator.Validate(uuid) {
 		return c.NoContent(http.StatusNotFound)
 	}
 
@@ -70,13 +72,11 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 	// set up a message channel
 	messageChan := make(msgChan)
 
-	// notify the room that a new occupant is joining
-	b.subscribing <- RoomSubscriber{id, messageChan}
-
 	// set up routine to notify broker of a disconnect
 	go func() {
 		<-c.Request().Context().Done()
 		b.unsubscribing <- RoomSubscriber{id, messageChan}
+		b.Leave(c)
 		log.Println("Room disconnect")
 	}()
 
@@ -86,6 +86,12 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 	// echo.HeaderContentEncoding <- https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding
 	c.Response().Header().Set("Transfer-Encoding", "chunked")
 
+	// notify the room that a new occupant is joining
+	b.subscribing <- RoomSubscriber{id, messageChan}
+
+  // send a message to the user that will show who is in the room
+	b.Join(c)
+
 	for {
 		msg, open := <-messageChan
 		if !open {
@@ -93,7 +99,6 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 			break
 		}
 		b.post(c, msg)
-
 	}
 	return nil
 }
@@ -104,6 +109,38 @@ func (b *RoomBroker) Add(r *Room) {
 
 func (b *RoomBroker) Remove(r *Room) {
 	delete(b.subscribers, r.ID.String())
+}
+
+func (b *RoomBroker) Join(c echo.Context) error {
+	// just write to the current response writer
+	id := c.Param("id")
+	uuid, err := uuid.Parse(id); 
+	if err != nil {
+		return err
+	}
+	room := b.lobby.Rooms[uuid]
+
+	room.Join(c)
+
+	bytes, err := json.Marshal(room)
+	if err != nil {
+		return err
+	}
+	b.post(c, bytes)
+	return nil
+}
+
+func (b *RoomBroker) Leave(c echo.Context) error {
+	id := c.Param("id")
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	room := b.lobby.Rooms[uuid]
+	room.Leave(c)
+	
+	// user has left so nothing left to do
+	return nil
 }
 
 func (b *RoomBroker) listen() {
