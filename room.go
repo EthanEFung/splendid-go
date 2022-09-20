@@ -10,6 +10,7 @@ type Room struct {
 	Name      string           `json:"name"`
 	Game      *Game            `json:"game"`
 	Occupants map[string]*User `json:"occupants"`
+	Host      string           `json:"host"`
 	broker    *RoomBroker
 }
 
@@ -38,6 +39,11 @@ func (r *Room) Join(c echo.Context) {
 func (r *Room) Leave(c echo.Context) {
 	userID := c.Get("user-id")
 	delete(r.Occupants, userID.(string))
+}
+
+func (r *Room) setHost(c echo.Context) {
+	id := c.Get("user-id")
+	r.Host = id.(string)
 }
 
 func (r *Room) setPlayers(n int) {

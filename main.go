@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/ethanefung/splendid-go/middlewares"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -59,7 +61,6 @@ func main() {
 
 	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusOK) })
 	e.GET("/lobby", echo.WrapHandler(lobbyBroker), middlewares.CreateSessionToken)
-	e.GET("/room/:id", roomBroker.HanderFunc, middlewares.AuthenticateToken)
 	e.POST("/create", func(c echo.Context) error {
 		type parameters struct {
 			Roomname string `json:"roomname" form:"roomname" query:"roomname"`
@@ -83,8 +84,41 @@ func main() {
 		room := NewRoom(p.Roomname, lobby.roomBroker)
 		room.setPlayers(players)
 		lobby.Add(room)
+		room.setHost(c)
 		log.Printf("\n_________________________\n")
-		return c.NoContent(http.StatusCreated)
+		return c.String(http.StatusCreated, room.ID.String())
+	}, middlewares.AuthenticateToken)
+	e.GET("/room/:id", roomBroker.HanderFunc, middlewares.AuthenticateToken)
+
+	e.POST("/room/:id/start", func(c echo.Context) error {
+		// validate if this is a room
+		roomStr := c.Param("id")
+		roomID, err := uuid.Parse(roomStr)
+		if err != nil {
+			log.Println("roomID could not be parsed")
+			return err
+		}
+		room, exists := lobby.Rooms[roomID]
+		if !exists {
+			return errors.New("no such room")
+		}
+		// validate this is coming from the host
+		userID := c.Get("user-id")
+		log.Printf("userID: %v", userID)
+
+		if room.Host != userID.(string) {
+			/*
+				! currently if the user who is hosting leaves the room,
+				  the user upon returning is given a new user ID. This
+					should be investigated
+			*/
+			return c.String(http.StatusForbidden, "user is not host")
+		}
+
+		return room.Game.Start()
+	}, middlewares.AuthenticateToken)
+	e.POST("/room/:id/play", func(c echo.Context) error {
+		return nil
 	}, middlewares.AuthenticateToken)
 
 	/*************

@@ -62,7 +62,7 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 
 	// check to see whether or not the suggested room is a valid room id
 	id := c.Param("id")
-	uuid, err := uuid.Parse(id); 
+	uuid, err := uuid.Parse(id)
 	if err != nil || !b.validator.Validate(uuid) {
 		return c.NoContent(http.StatusNotFound)
 	}
@@ -89,7 +89,7 @@ func (b *RoomBroker) HanderFunc(c echo.Context) error {
 	// notify the room that a new occupant is joining
 	b.subscribing <- RoomSubscriber{id, messageChan}
 
-  // send a message to the user that will show who is in the room
+	// send a message to the user that will show who is in the room
 	b.Join(c)
 
 	for {
@@ -114,7 +114,7 @@ func (b *RoomBroker) Remove(r *Room) {
 func (b *RoomBroker) Join(c echo.Context) error {
 	// just write to the current response writer
 	id := c.Param("id")
-	uuid, err := uuid.Parse(id); 
+	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (b *RoomBroker) Leave(c echo.Context) error {
 	}
 	room := b.lobby.Rooms[uuid]
 	room.Leave(c)
-	
+
 	// user has left so nothing left to do
 	return nil
 }
